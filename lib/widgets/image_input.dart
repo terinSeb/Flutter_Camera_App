@@ -6,30 +6,39 @@ import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart' as syspath;
 
 class ImageInput extends StatefulWidget {
-  const ImageInput({super.key});
+  final Function onSelectImage;
+  const ImageInput({super.key, required this.onSelectImage});
 
   @override
   State<ImageInput> createState() => _ImageInputState();
 }
 
 class _ImageInputState extends State<ImageInput> {
+  // ignore: non_constant_identifier_names
+  File? _StoredImage;
   Future<void> _takePicture() async {
-    final picker = ImagePicker();
-
-    final imageFile =
-        await picker.pickImage(source: ImageSource.camera, maxWidth: 600);
-    setState(() {
-      _StoredImage = File(imageFile!.path);
-    });
-
-    final appDir = await syspath.getApplicationDocumentsDirectory();
-    final filename = path.basename(imageFile!.path);
     // ignore: unused_local_variable
-    final savedImage = await imageFile.saveTo('${appDir.path}/$filename');
+
+    final picker = ImagePicker();
+    final imageFile = await picker.pickImage(
+      source: ImageSource.camera,
+      maxWidth: 600,
+    );
+    if (imageFile == null) {
+      return;
+    }
+    setState(() {
+      _StoredImage = File(imageFile.path);
+    });
+    final appDir = await syspath.getApplicationDocumentsDirectory();
+    final fileName = path.basename(imageFile.path);
+    final savedImage =
+        await File(imageFile.path).copy('${appDir.path}/$fileName');
+    widget.onSelectImage(savedImage);
   }
 
   // ignore: non_constant_identifier_names
-  File? _StoredImage;
+
   @override
   Widget build(BuildContext context) {
     return Row(
